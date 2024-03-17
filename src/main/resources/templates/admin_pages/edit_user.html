@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Редактор пользователя','none')}"></div>
+</head>
+<body>
+<div class="container-fluid" >
+    <div th:replace="~{fragments/navbars :: admin_navbar}"></div>
+</div>
+    <form id="registration_form" th:action="@{/users/save}" method="post" style="max-width:700px; margin: 0 auto"
+          th:object="${user}">
+        <input type="hidden" th:field="*{id}">
+        <div class="border border-secondary rounded p-3">
+            <div class="form-group row">
+                <label class="col-sm-4 col-form-label">E-mail:</label>
+                <div class="col-sm-7">
+                    <input type="email" class="form-control mt-2 mb-2" th:field="*{email}"  required minlength="8" maxlength="128"/>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-4 col-form-label">Телефон:</label>
+                <div class="col-sm-7">
+                    <input type="tel" id="phone" class="form-control form-control-lg" name="phone" pattern="\+375[0-9]{9}" placeholder="+375XXXXXXXXX" required th:field="*{phone_number}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-4 col-form-label">Пароль:</label>
+                <div class="col-sm-7">
+
+                    <input th:if="${user.id!=null}" type="password" class="form-control mt-2 mb-2" th:field="*{password}"  minlength="8" maxlength="64" placeholder="Оставить старый пороль - поле не изменять"/>
+
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-4 col-form-label">Роли:</label>
+                <div class="col-sm-7">
+                    <th:block th:each="role : ${listRoles}">
+                        <input type="radio" th:field="*{roles}" th:text="${role.name}" th:value="${role.id}"
+                               class="m-2"/>
+                        <br/>
+                    </th:block>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-4 col-form-label">Активен:</label>
+                <div class="col-sm-6">
+                    <input type="checkbox" th:field="*{enabled}" class="m-2"/>
+                </div>
+            </div>
+            <div class="text-center">
+                <input type="button" class="btn btn-primary" value="Сохранить" onclick="checkUnique()">
+                <input type="button" value="Отменить" class="btn btn-secondary" id="buttonCancel"/>
+            </div>
+        </div>
+    </form>
+<div th:replace="~{fragments/fragment :: modal_form('email_modal','Предупреждение','Пользователь с таким e-mail уже существует')}" >
+</div>
+<div th:replace="~{fragments/fragment :: modal_form('phone_modal','Предупреждение','Пользователь с таким телефоном уже существует')}" >
+</div>
+<script>
+    function checkUnique(){
+        let userId = $("#id").val();
+        let csrfValue = $("input[name='_csrf']").val();
+        // let isValid = true;
+        let form=document.getElementById("registration_form");
+        let email = $("#email").val();
+        let emailParams = {id: userId, email: email, _csrf: csrfValue};
+        const emailModal = new bootstrap.Modal(document.getElementById('email_modal'), {});
+        $.post("[[@{/account/check_email}]]", emailParams, function (response){
+            if(response =="Duplicated"){
+                emailModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+        let phone_number = $("#phone").val();
+        let phoneParams = {id: userId, phone_number: phone_number, _csrf: csrfValue};
+        const phoneModal = new bootstrap.Modal(document.getElementById('phone_modal'), {});
+        $.post("[[@{/account/check_phone_number}]]", phoneParams, function (response){
+            if(response =="OK"){
+                form.submit();
+            }else if(response =="Duplicated"){
+                phoneModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+
+    }
+    $(document).ready(function(){
+        $("#buttonCancel").on("click", function(){
+            window.location="[[@{/users}]]";
+        });
+    });
+</script>
+</body>
+</html>

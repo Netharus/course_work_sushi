@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Успех!','none')}"></div>
+</head>
+<body>
+<div class="d-flex align-items-center justify-content-center vh-100">
+    <div class="text-center">
+        <p class="fs-3">ВЫ УСПЕШНО СОЗДАЛИ АККАУНТ</p>
+        <p class="lead">
+            Нажмите на кнопку ниже чтобы войти
+        </p>
+        <a th:href="@{/login}" class="btn btn-primary">Войти в аккаунт:)</a>
+    </div>
+</div>
+</body>
+</html>

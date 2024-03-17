@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Товары','none')}"></div>
+</head>
+<body>
+    <div th:replace="~{fragments/navbars :: admin_navbar}"></div>
+<div class="container-fluid">
+
+    <div class="d-flex align-items-center m-2">
+        <h2>Управление товарами</h2>
+        <a role="button" data-bs-toggle="modal" data-bs-target="#product_modal">
+            <i class="fa-solid fa-plus fa-2xl ml-3" style="color: green"></i>
+        </a>
+        <div th:replace="~{fragments/product_form :: product_form_modal()}" class="ml-3"></div>
+    </div>
+
+
+    <div th:if="${massage!=null}" class="alert alert-success text-center">
+        [[${massage}]]
+    </div>
+    <div th:replace="~{fragments/fragment :: search_form('/products/page/1')}"></div>
+    <div>
+        <table class="table table-bordered table-striped table-responsive-xl">
+            <thead class="table-light">
+            <tr>
+                <th th:replace="~{fragments/fragment::column_link('/products','id','id')}"/>
+                <th>Фото продукта</th>
+                <th th:replace="~{fragments/fragment::column_link('/products','name','Название')}"/>
+                <th/>Категория</th>
+                <th th:replace="~{fragments/fragment::column_link('/products','enabled','Статус')}"/>
+                <th th:replace="~{fragments/fragment::column_link('/products','inStock','В наличии')}"/>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product: ${listProducts}">
+                <td>[[${product.id}]]</td>
+                <td><img th:src="@{${product.mainImagePath}}" style="width: 100px" class="img-fluid"/>
+                </td>
+                <td>[[${product.name}]]</td>
+                <td>[[${product.category}]]</td>
+                <td><a th:if="${product.enabled==true}"
+                       class="fa-solid fa-circle-check fa-2x icon-green text-center text-decoration-none"
+                       style="color: green" th:href="@{'/products/change_status/'+${product.id}}" title="Изменить статус"></a>
+                    <a th:if="${product.enabled==false}"
+                       class="fa-cog fa-solid fa-solid fa-circle-xmark fa-2x icon-dark text-center text-decoration-none"
+                       style="color: red" th:href="@{'/products/change_status/'+${product.id}}"></a>
+                </td>
+                <td><a th:if="${product.inStock==true}"
+                       class="fa-solid fa-circle-check fa-2x icon-green text-center text-decoration-none"
+                       style="color: green" th:href="@{'/products/change_stock/'+${product.id}}" title="Изменить наличие"></a>
+                    <a th:if="${product.inStock==false}"
+                       class="fa-cog fa-solid fa-solid fa-circle-xmark fa-2x icon-dark text-center text-decoration-none"
+                       style="color: red" th:href="@{'/products/product_status/'+${product.id}}"></a>
+                </td>
+                <td class="col-md-auto">
+                    <div class="row align-items-center">
+                        <div class="col-md-auto">
+                            <a class="fa-solid fa-file-circle-question fa-2x text-center text-decoration-none m-2" style="color:green" id="productDetails" title="Увидеть подробную информацию"  data-bs-toggle="modal" data-bs-target="#productModal" ></a>
+                        </div>
+                        <div class="col-md-auto">
+                            <a class="btn btn-success" th:href="@{'/products/edit/'+${product.id}}">Редактировать</a> &nbsp;
+                        </div>
+
+                        <div class="col-md-auto">
+                            <a class="btn btn-outline-danger" style="" th:href="@{'/products/delete/'+${product.id}}" >Удалить</a>
+                        </div>
+                    </div>
+                </td>
+                <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="productModalLabel">Карточка товара</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body d-flex justify-content-center align-items-center">
+                                <div class="card" style="width: 18rem;">
+                                    <img class="card-img-top" th:src="@{${product.mainImagePath}}">
+                                    <div class="card-body">
+                                        <h3>[[${product.name}]]</h3>
+                                        <hr>
+                                        <h5>Описание</h5>
+                                        <p class="card-text">[[${product.shortDescription}]]</p>
+                                        <div calss="container">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <h4>[[${product.price}]]$</h4>
+                                                </div>
+                                                <div class="col">
+                                                    <button type="button" class="btn btn-outline-success">Купить</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:replace="~{fragments/fragment :: pagination('/products','продукты')}"></div>
+</div>
+<script th:src="@{/js/image_upload.js}"></script>
+<script>
+    function checkUnique() {
+        const form=document.getElementById("product_creation_form");
+        const prodId = $("#id").val();
+        const prodName = $("#name").val();
+        const csrfValue = $("input[name='_csrf']").val();
+        const url = "[[@{/products/check_unique}]]";
+        params = {id: prodId, name: prodName, _csrf: csrfValue};
+        $.post(url, params, function (response){
+            if(response =="OK"){
+                form.submit();
+            }else if(response =="Duplicated"){
+                alert("Такой товар уже существует")
+            }
+        }).fail(function(){
+            alert('failed');
+        });
+    }
+</script>
+</body>
+</html>

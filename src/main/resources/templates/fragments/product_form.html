@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+</head>
+<body>
+  <div th:fragment="product_form_modal()">
+    <div class="modal" id="product_modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Создание товара</h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form th:action="@{/products/save}" id="product_creation_form" method="post" enctype="multipart/form-data"
+                  th:object="${product}" >
+              <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" >Общая информация</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#images" type="button" role="tab" >Фото</button>
+                </li>
+              </ul>
+              <div class="tab-content">
+                <div class="tab-pane active p-3" id="overview" role="tabpanel" >
+                  <div th:replace="~{fragments/product_form :: description_tab()}"></div>
+                </div>
+                <div class="tab-pane" id="images" role="tabpanel" >
+                  <div th:replace="~{fragments/product_form :: image_tab()}"></div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <input type="button" class="btn btn-primary btn-lg" value="Сохранить" onclick="checkUnique()">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Закрыть</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:fragment="description_tab()">
+    <div class="form-group row align-items-center">
+      <label class="col-sm-3 col-form-label">Название:</label>
+      <div class="col-sm-7">
+        <input type="text" class="form-control mt-2 mb-2" th:field="*{name}" required minlength="3" maxlength="256"/>
+      </div>
+    </div>
+    <div class="form-group row align-items-center">
+      <label class="col-sm-3 col-form-label">Категория:</label>
+      <div class="col-sm-7">
+        <select class="form-control " placeholder="Выберите категорию" th:field="*{category}">
+          <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group row align-items-center">
+      <label class="col-sm-2 col-form-label">Активен:</label>
+      <div class="col-sm-7 d-flex flex-row">
+        <input type="checkbox" th:field="*{enabled}" class="m-2"/>
+      </div>
+    </div>
+    <div class="form-group row align-items-center">
+      <label class="col-sm-3 col-form-label">В наличии:</label>
+      <div class="col-sm-5 d-flex flex-row">
+        <input type="checkbox" th:field="*{inStock}" class="m-1"/>
+      </div>
+    </div>
+    <div class="form-group row align-items-center">
+      <label class="col-sm-2 col-form-label">Цена:</label>
+      <div class="col-sm-7">
+        <input type="number" th:field="*{price}" class="m-2" min="0"/>
+      </div>
+    </div>
+    <div class="form-group row align-items-center">
+      <label class="col-sm-2 col-form-label">Ингридиенты:</label>
+      <textarea class="form-control" th:field="*{shortDescription}" rows="4" required></textarea>
+    </div>
+  </div>
+
+  <div th:fragment="image_tab()">
+    <div>
+      <div class="col border m-3 p-2">
+        <label>Основная фотография:</label>
+        <div class="mb-2">
+          <img id="thumbnail" alt="Предварительный просмотр основной фотографии" style="max-width:250px;" th:src="@{${product.mainImagePath}}"
+               class="img-fluid" />
+        </div>
+        <div>
+          <input type="hidden" th:field="*{mainImage}" />
+          <input type="file" id="fileImage" name="fileImage" accept="image/png, image/jpeg"
+                 th:required="${product.mainImagePath==null}"
+                 class="mb-2" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div  th:fragment="product_card(productId,mainImagePath,name,description,price,inStock)">
+    <div class="d-flex justify-content-center align-items-center">
+      <div class="card d-inline-block" style="width: 18rem;">
+        <img class="card-img-top" th:src="@{${mainImagePath}}">
+        <input type="hidden" id="product_id" th:value="${productId}">
+        <div class="card-body">
+          <h3>[[${name}]]</h3>
+          <hr>
+          <h5>Описание</h5>
+          <h5 th:unless="${inStock}" class="text-danger">Нет в наличии</h5>
+          <p class="card-text">[[${description}]]</p>
+          <div th:replace="~{fragments/fragment :: quantity_control(1,${productId})}"></div>
+          <div calss="container">
+            <div class="row">
+              <div class="col">
+                <h4>[[${price}]]$</h4>
+              </div>
+              <div class="col">
+                <button type="button" id="addCart" th:pid="${productId}" class="btn btn-outline-success">Купить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Sushi','none')}"></div>
+</head>
+<body>
+<div th:replace="~{fragments/navbars :: user_navbar}"></div>
+
+
+<div class="container my-5">
+    <div id="sushi" th:unless="${#lists.isEmpty(sushi)}">
+        <h3>Суши</h3>
+        <div class="d-flex flex-wrap justify-content-center">
+            <div th:each="item: ${sushi}">
+                <div th:if="${item.enabled}==true">
+                    <div class="mb-3">
+                        <div th:replace="~{fragments/product_form :: product_card(${item.id},${item.mainImagePath},${item.name},${item.shortDescription},${item.price},${item.inStock})}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="garnish" th:unless="${#lists.isEmpty(garnish)}">
+        <h3>Гарнир</h3>
+        <div class="d-flex flex-wrap justify-content-center">
+            <div th:each="item: ${garnish}">
+                <div th:if="${item.enabled}==true">
+                    <div class="mb-3">
+                        <div th:replace="~{fragments/product_form :: product_card(${item.id},${item.mainImagePath},${item.name},${item.shortDescription},${item.price},${item.inStock})}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="sauce" th:unless="${#lists.isEmpty(sauce)}">
+        <h3>Соусы</h3>
+        <div class="d-flex flex-wrap justify-content-center">
+            <div th:each="item: ${sauce}">
+                <div th:if="${item.enabled}==true">
+                    <div class="mb-3">
+                        <div th:replace="~{fragments/product_form :: product_card(${item.id},${item.mainImagePath},${item.name},${item.shortDescription},${item.price},${item.inStock})}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="drinks" th:unless="${#lists.isEmpty(drink)}">
+        <h3>Напитки</h3>
+        <div class="d-flex flex-wrap justify-content-center">
+            <div th:each="item: ${drink}">
+                <div th:if="${item.enabled}==true">
+                    <div class="mb-3">
+                        <div th:replace="~{fragments/product_form :: product_card(${item.id},${item.mainImagePath},${item.name},${item.shortDescription},${item.price},${item.inStock})}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade text-center" id="modalDialog" role="alertdialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">Предупреждение</h4>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <span id="modalBody"></span>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $(document).on("click", ".linkMinus", function(evt) {
+            evt.preventDefault();
+            var productId = $(this).attr("pid");
+            var quantityInput = $("#quantity" + productId);
+            var newQuantity = parseInt(quantityInput.val()) - 1;
+            if (newQuantity >= 1) {
+                quantityInput.val(newQuantity);
+            }
+        });
+
+        $(document).on("click", ".linkPlus", function(evt) {
+            evt.preventDefault();
+            var productId = $(this).attr("pid");
+            var quantityInput = $("#quantity" + productId);
+            var newQuantity = parseInt(quantityInput.val()) + 1;
+            quantityInput.val(newQuantity);
+        });
+        $(document).on("click","#addCart",function(){
+            const modal=new bootstrap.Modal("#modalDialog")
+            let csrfHeaderName='[[${_csrf.headerName}]]';
+            let csrfValue='[[${_csrf.token}]]';
+            let productId = $(this).attr("pid");
+            let quantity = $("#quantity" + productId).val();
+            let url = "/cart/add/" + productId + "/" + quantity;
+            $.ajax({
+                type: "POST",
+                url: url,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader(csrfHeaderName, csrfValue);
+                }
+            }).done(function() {
+                $("#modalBody").html("Товар добавлен в корзину")
+                modal.show();
+            }).fail(function(){
+                $("#modalBody").html("Сначала войдите/зарегистрируйтесь")
+                modal.show();
+            });
+        });
+    });
+
+</script>
+<script th:src="@{/js/logout_methods.js}"></script>
+</body>
+</html>

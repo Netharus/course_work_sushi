@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org">
+<html lang="en">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Пользователи','none')}"></div>
+</head>
+<body>
+<div th:replace="~{fragments/navbars :: admin_navbar}"></div>
+<div class="container-fluid">
+
+
+    <div class="d-flex align-items-center m-2">
+            <div class="mr-1">
+                <h2>Управление пользователями</h2>
+            </div>
+            <a title="Add user" data-bs-toggle="collapse" href="#collapseForm" role="button" aria-expanded="false" aria-controls="collapseExample"><i class="fa-solid fa-user-plus fa-2xl" style="color: darkgrey"></i></a>
+    </div>
+
+        <div class="mr-2">
+            <div class="collapse" id="collapseForm">
+                <h3 class="mr-2">Create new user:</h3>
+                <form id="registration_form" th:action="@{/users/save}" method="post" th:object="${user}" style="max-width:700px; margin: 0 auto">
+                    <div class="card-body p-5 text-center">
+                        <input type="hidden" th:field="*{id}">
+                        <div class="form-outline mb-4">
+                            <input type="email" id="email" placeholder="Email" class="form-control form-control-lg"  th:field="*{email}" required minlength="8" maxlength="128" />
+                        </div>
+                        <div class="form-outline mb-4">
+                            <input type="tel" id="phone" class="form-control form-control-lg" name="phone" pattern="\+375[0-9]{9}" placeholder="+375XXXXXXXXX" required th:field="*{phone_number}">
+                        </div>
+                        <div class="form-outline mb-4">
+                            <input type="password" id="password" placeholder="Password" class="form-control form-control-lg" required th:field="*{password}"  minlength="8" maxlength="64"/>
+                        </div>
+                        <div class="form-outline mb-4">
+                            <input type="password" id="repeat_password" placeholder="Repeat password" oninput="checkPassword(this)" class="form-control form-control-lg" required minlength="8" maxlength="64"/>
+                        </div>
+                        <div>
+                            <label>Выберите роль</label>
+                            <br/>
+                            <th:block th:each="role : ${listRoles}">
+                                <input type="radio" th:field="*{roles}" th:text="${role.name}" th:value="${role.id}" class="m-2"/>
+                            </th:block>
+                        </div>
+                        <input type="button" class="btn btn-primary btn-lg" value="Сохранить" onclick="checkUnique()"></input>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <div th:if="${massage!=null}" class="alert alert-success text-center">
+        [[${massage}]]
+    </div>
+    <div th:replace="~{fragments/fragment :: search_form('/users/page/1')}"></div>
+
+    <div>
+        <table class="table table-bordered table-striped table-responsive-xl">
+            <thead class="table-light">
+            <tr>
+                <th th:replace="~{fragments/fragment::column_link('/users','id','id')}"/>
+                <th th:replace="~{fragments/fragment::column_link('/users','email','e-mail')}"/>
+                <th th:replace="~{fragments/fragment::column_link('/users','phone_number','номер телефона')}"/>
+                <th>Роль</th>
+                <th th:replace="~{fragments/fragment::column_link('/users','enabled','Статус')}"/>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user: ${listUsers}">
+                <td>[[${user.id}]]</td>
+                <td>[[${user.email}]]</td>
+                <td>[[${user.phone_number}]]</td>
+                <td>[[${user.roles}]]</td>
+                <td>
+                    <a th:if="${user.enabled==true}"
+                       class="fa-solid fa-circle-check fa-2x icon-green text-center text-decoration-none"
+                       style="color: green" th:href="@{'/users/change_status/'+${user.id}}"></a>
+                    <a th:if="${user.enabled==false}"
+                       class="fa-cog fa-solid fa-solid fa-circle-xmark fa-2x icon-dark text-center text-decoration-none"
+                       style="color: red" th:href="@{'/users/change_status/'+${user.id}}"></a>
+                </td>
+                <td>
+                    <a class="btn btn-success" th:href="@{'/users/edit/'+${user.id}}">Редактировать</a> &nbsp;
+                    <a class="btn btn-outline-danger" style="" th:href="@{'/users/delete/'+${user.id}}" >Удалить</a>
+<!--                              <button class="btn btn-outline-danger " th:userId="${user.id}" data-bs-toggle="modal" data-bs-target="#confirmModal">Удалить</button>-->
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+<!--        <div class="modal" id="confirmModal">-->
+<!--            <div class="modal-dialog">-->
+<!--                <div class="modal-content">-->
+<!--                    <div class="modal-header">-->
+<!--                        <h4 class="modal-title">Предупреждение</h4>-->
+<!--                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--                    </div>-->
+<!--                    <div class="modal-body">-->
+<!--                       <p>Вы уверены что хотите удалить пользователя</p>-->
+<!--                    </div>-->
+<!--                    <div class="modal-footer">-->
+<!--                        <a class="btn btn-outline-danger" style="" onclick="">Удалить</a>-->
+<!--                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Закрыть</button>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+    <div th:replace="~{fragments/fragment :: modal_form('email_modal','Предупреждение','Пользователь с таким e-mail уже существует')}" >
+    </div>
+    <div th:replace="~{fragments/fragment :: modal_form('phone_modal','Предупреждение','Пользователь с таким телефоном уже существует')}" >
+    </div>
+    <div th:replace="~{fragments/fragment :: pagination('/users','пользователи')}"></div>
+
+</div>
+<script type="text/javascript">
+
+    function checkUnique(){
+        let userId = $("#id").val();
+        let csrfValue = $("input[name='_csrf']").val();
+        let form=document.getElementById("registration_form");
+        let email = $("#email").val();
+        let emailParams = {id: userId, email: email, _csrf: csrfValue};
+        const emailModal = new bootstrap.Modal(document.getElementById('email_modal'), {});
+        $.post("[[@{/account/check_email}]]", emailParams, function (response){
+            if(response =="Duplicated"){
+                emailModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+        let phone_number = $("#phone").val();
+        let phoneParams = {id: userId, phone_number: phone_number, _csrf: csrfValue};
+        const phoneModal = new bootstrap.Modal(document.getElementById('phone_modal'), {});
+        $.post("[[@{/account/check_phone_number}]]", phoneParams, function (response){
+            if(response =="OK"){
+                form.submit();
+            }else if(response =="Duplicated"){
+                phoneModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+
+    }
+    function checkPassword(confirmPassword){
+        if(confirmPassword.value!= $("#password").val()){
+            confirmPassword.setCustomValidity("Пароли разные!");
+        }else{
+            confirmPassword.setCustomValidity("");
+        }
+    }
+    $(document).ready(function (){
+        $("#logoutLink").on("click", function (e) {
+            e.preventDefault();
+            document.logoutForm.submit();
+        })
+    })
+
+    function clearFilter(){
+        window.location="[[@{/users}]]";
+    }
+</script>
+</body>
+</html>

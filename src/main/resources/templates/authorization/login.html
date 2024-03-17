@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymleaf.org">
+<head>
+    <div th:replace="~{fragments/fragment :: page_head('Вход','none')}"></div>
+<!--    <script type="text/javascript" src="/js/registration_methods.js"></script>-->
+</head>
+<body>
+<section class="vh-100" style="background-color: #1EDDBE;">
+    <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card shadow-2-strong " style="border-radius: 1rem;">
+
+                    <ul class="nav nav-pills nav-justified" id="ex1" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active rounded-pill mt-1" id="tab-login" data-bs-toggle="pill" data-bs-target="#pills-login" role="tab"
+                               aria-controls="pills-login" aria-selected="true">Login</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link rounded-pill mt-1" id="tab-register" data-bs-toggle="pill" data-bs-target="#pills-register" role="tab"
+                               aria-controls="pills-register" aria-selected="false">Register</a>
+                        </li>
+                    </ul>
+                    <style>
+                        .nav-pills .nav-link.active {
+                            background-color: #FE754A;
+                            color: white;
+                        }
+
+                        .nav-pills .nav-link {
+                            background-color: white;
+                            color: black;
+                        }
+                    </style>
+                    <div class="tab-content">
+                        <div class="tab-pane show active" id="pills-login">
+                            <form th:action="@{/login}" method="post">
+                                <div class="mt-1 justify-content-center" th:if="${param.error}">
+                                    <p class="text-danger">Неверный e-mail/пороль</p>
+                                </div>
+                                <div class="card-body p-5 text-center">
+
+                                    <div class="form-outline mb-4">
+                                        <input  type="email" name="email" placeholder="e-mail" class="form-control form-control-lg" />
+                                    </div>
+
+                                    <div class="form-outline mb-4">
+                                        <input type="password" name="password" placeholder="Пароль" class="form-control form-control-lg" />
+                                    </div>
+
+                                    <div class="form-check d-flex justify-content-start mb-4">
+                                        <input class="form-check-input" type="checkbox" name="remember-me" />
+                                        <label class="form-check-label" > Запомнить меня </label>
+                                    </div>
+
+                                    <button class="btn btn-lg btn-block" type="submit" style="background-color: #F7A801; color: white" >Вход</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane" id="pills-register">
+                            <form  id="registration_form" th:action="@{/account/create_new}" method="post" th:object="${user}" >
+                                <input type="hidden" th:field="*{id}">
+                                <input type="hidden" th:field="*{roles}" th:value="${role.id}">
+                                <div class="card-body p-5 text-center">
+
+                                    <div class="form-outline mb-4">
+                                        <input type="email" id="email" placeholder="Email" class="form-control form-control-lg"  th:field="*{email}" required minlength="8" maxlength="128" />
+                                    </div>
+                                    <div class="form-outline mb-4">
+                                        <input type="tel" id="phone" class="form-control form-control-lg" name="phone" pattern="\+375[0-9]{9}" placeholder="+375XXXXXXXXX" required th:field="*{phone_number}">
+                                    </div>
+                                    <div class="form-outline mb-4">
+                                        <input type="password" id="password" placeholder="Password" class="form-control form-control-lg" required th:field="*{password}"  minlength="8" maxlength="64"/>
+                                    </div>
+                                    <div class="form-outline mb-4">
+                                        <input type="password" id="repeat_password" placeholder="Repeat password" oninput="checkPassword(this)" class="form-control form-control-lg" required minlength="8" maxlength="64"/>
+                                    </div>
+                                    <div class="form-check d-flex justify-content-start mb-4">
+                                        <input class="form-check-input" type="checkbox" name="remember-me" />
+                                        <label class="form-check-label" > Запомнить меня </label>
+                                    </div>
+                                    <button class="btn btn-lg btn-block" type="submit" style="background-color: #F7A801; color: white" >Вход</button>
+                                    <input type="button" class="btn btn-lg" style="background-color: #F7A801; color: white" value="Сохранить" onclick="checkUnique()">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div th:replace="~{fragments/fragment :: modal_form('email_modal','Предупреждение','Пользователь с таким e-mail уже существует')}" >
+</div>
+<div th:replace="~{fragments/fragment :: modal_form('phone_modal','Предупреждение','Пользователь с таким телефоном уже существует')}" >
+</div>
+
+<script type="text/javascript">
+    function checkUnique(){
+        let userId = $("#id").val();
+        let csrfValue = $("input[name='_csrf']").val();
+        let form=document.getElementById("registration_form");
+        let email = $("#email").val();
+        let emailParams = {id: userId, email: email, _csrf: csrfValue};
+        const emailModal = new bootstrap.Modal(document.getElementById('email_modal'), {});
+        $.post("[[@{/account/check_email}]]", emailParams, function (response){
+            if(response =="Duplicated"){
+                emailModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+        let phone_number = $("#phone").val();
+        let phoneParams = {id: userId, phone_number: phone_number, _csrf: csrfValue};
+        const phoneModal = new bootstrap.Modal(document.getElementById('phone_modal'), {});
+        $.post("[[@{/account/check_phone_number}]]", phoneParams, function (response){
+            if(response =="OK"){
+                form.submit();
+            }else if(response =="Duplicated"){
+                phoneModal.show();
+            }
+        }).fail(function () {
+            alert("Cannot connect to server");
+        });
+
+    }
+    function checkPassword(confirmPassword){
+        if(confirmPassword.value!= $("#password").val()){
+            confirmPassword.setCustomValidity("Пароли разные!");
+        }else{
+            confirmPassword.setCustomValidity("");
+        }
+    }
+</script>
+</body>
+</html>
